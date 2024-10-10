@@ -95,17 +95,24 @@ def plot_over_line(point_cloud: PointCloud,
                    n: int = 1000) -> None:
     assert point_cloud.size == len(point_values)
 
-    # First, let us discretize the line into `n` points
     line = Line(p0, p1)
     points_on_line = line.get_n_points_on_line(n)
 
+    x, y = rasterize(n, p0, point_cloud, point_values, points_on_line)
+    plot_line(x, y)
+
+
+def rasterize(n, p0, point_cloud, point_values, points_on_line):
     x = []
     y = []
     for i in range(n):
         current = points_on_line[i]
         x.append(p0.distance_to(current))
         y.append(point_values[point_cloud.get_nearest_point_index(current)])
+    return x, y
 
+
+def plot_line(x, y):
     plot(x, y)
     show()
     close()
