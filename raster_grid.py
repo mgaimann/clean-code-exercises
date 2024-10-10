@@ -23,35 +23,36 @@ from typing import Tuple
 from math import isclose
 from dataclasses import dataclass
 
+@dataclass
+class Rectangle:
+    x_lower_left: float
+    y_lower_left: float
+    x_upper_right: float
+    y_upper_right: float
 
 class RasterGrid:
     @dataclass
     class Cell:
-        _ix: int
-        _iy: int
+        idx_x: int
+        idx_y: int
 
     def __init__(self,
-                 x0: float,
-                 y0: float,
-                 x1: float,
-                 y1: float,
-                 nx: int,
-                 ny: int) -> None:
-        self._x0 = x0
-        self._y0 = y0
-        self._x1 = x1
-        self._y1 = y1
-        self._nx = nx
-        self._ny = ny
-        self.nc = nx*ny
+                 box: Rectangle,
+                 n_cells_x: int,
+                 n_cells_y: int) -> None:
+
+        self.box = box
+        self._n_cells_x = n_cells_x
+        self._n_cells_y = n_cells_y
+        self.n_cells = n_cells_x * n_cells_y
         self.cells = [
-            self.Cell(i, j) for i in range(nx) for j in range(ny)
+            self.Cell(i, j) for i in range(n_cells_x) for j in range(n_cells_y)
         ]
 
-    def c(self, cell: Cell) -> Tuple[float, float]:
+    def get_cell_center(self, cell: Cell) -> Tuple[float, float]:
         return (
-            self._x0 + (float(cell._ix) + 0.5)*(self._x1 - self._x0)/self._nx,
-            self._y0 + (float(cell._iy) + 0.5)*(self._y1 - self._y0)/self._ny
+            self.box.x_lower_left + (float(cell.idx_x) + 0.5) * (self.box.x_upper_right - self.box.x_lower_left) / self._n_cells_x,
+            self.box.y_lower_left + (float(cell.idx_y) + 0.5) * (self.box.y_upper_right - self.box.y_lower_left) / self._n_cells_y
         )
 
 
@@ -60,14 +61,16 @@ def test_number_of_cells():
     y0 = 0.0
     dx = 1.0
     dy = 1.0
-    assert RasterGrid(x0, y0, dx, dy, 10, 10).nc == 100
-    assert RasterGrid(x0, y0, dx, dy, 10, 20).nc == 200
-    assert RasterGrid(x0, y0, dx, dy, 20, 10).nc == 200
-    assert RasterGrid(x0, y0, dx, dy, 20, 20).nc == 400
+    box = Rectangle(x0, y0, x0 + dx, y0 + dy)
+    assert RasterGrid(box, 10, 10).n_cells == 100
+    assert RasterGrid(box, 10, 20).n_cells == 200
+    assert RasterGrid(box, 20, 10).n_cells == 200
+    assert RasterGrid(box, 20, 20).n_cells == 400
 
 
 def test_cell_center():
-    grid = RasterGrid(0.0, 0.0, 2.0, 2.0, 2, 2)
+    box = Rectangle(0.0, 0.0, 2.0, 2.0)
+    grid = RasterGrid(box, 2, 2)
     expected_centers = [
         (0.5, 0.5),
         (1.5, 0.5),
@@ -77,7 +80,7 @@ def test_cell_center():
 
     for cell in grid.cells:
         for center in expected_centers:
-            if isclose(grid.c(cell)[0], center[0]) and isclose(grid.c(cell)[1], center[1]):
+            if isclose(grid.get_cell_center(cell)[0], center[0]) and isclose(grid.get_cell_center(cell)[1], center[1]):
                 expected_centers.remove(center)
 
     assert len(expected_centers) == 0
