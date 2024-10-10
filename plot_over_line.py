@@ -29,7 +29,7 @@ class Point:
     def distance_to(self, other: Point) -> float:
         dx = other.x - self.x
         dy = other.y - self.y
-        return sqrt(dx*dx + dy*dy)
+        return sqrt(dx * dx + dy * dy)
 
 
 class PointCloud:
@@ -60,6 +60,34 @@ class PointCloud:
         return self._points.index(self.get_nearest(p))
 
 
+class Line:
+    def __init__(self, source: Point, target: Point) -> None:
+        self._source = source
+        self._target = target
+        self._vector = (
+            target.x - source.x,
+            target.y - source.y
+        )
+
+    @property
+    def source(self) -> Point:
+        return self._source
+
+    @property
+    def target(self) -> Point:
+        return self._target
+
+    def at(self, fraction: float) -> Point:
+        assert fraction >= 0.0 and fraction <= 1.0
+        return Point(
+            self._source.x + fraction * self._vector[0],
+            self._source.y + fraction * self._vector[1]
+        )
+
+    def get_n_points_on_line(self, n: int) -> List[Point]:
+        return [self.at(float(i / n)) for i in range(n)]
+
+
 def plot_over_line(point_cloud: PointCloud,
                    point_values: List[float],
                    p0: Point,
@@ -68,9 +96,8 @@ def plot_over_line(point_cloud: PointCloud,
     assert point_cloud.size == len(point_values)
 
     # First, let us discretize the line into `n` points
-    dx = (p1.x - p0.x)/(n - 1)
-    dy = (p1.y - p0.y)/(n - 1)
-    points_on_line = [Point(p0.x + dx*float(i), p0.y + dy*float(i)) for i in range(n)]
+    line = Line(p0, p1)
+    points_on_line = line.get_n_points_on_line(n)
 
     x = []
     y = []
@@ -85,7 +112,7 @@ def plot_over_line(point_cloud: PointCloud,
 
 
 def _test_function(position: Point) -> float:
-    return sin(2.0*pi*position.x)*cos(2.0*pi*position.y)
+    return sin(2.0 * pi * position.x) * cos(2.0 * pi * position.y)
 
 
 if __name__ == "__main__":
@@ -98,12 +125,12 @@ if __name__ == "__main__":
     domain_size = (1.0, 1.0)
     number_of_points = (50, 50)
     dx = (
-        domain_size[0]/float(number_of_points[0]),
-        domain_size[1]/float(number_of_points[1])
+        domain_size[0] / float(number_of_points[0]),
+        domain_size[1] / float(number_of_points[1])
     )
 
     point_cloud = PointCloud([
-        Point(float(i)*dx[0], float(j)*dx[1])
+        Point(float(i) * dx[0], float(j) * dx[1])
         for i in range(number_of_points[0])
         for j in range(number_of_points[1])
     ])
